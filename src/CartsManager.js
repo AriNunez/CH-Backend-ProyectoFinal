@@ -1,4 +1,5 @@
 import fs from "fs";
+import productManager from "./ProductManager";
 
 class CartManager {
   constructor(path) {
@@ -43,21 +44,26 @@ class CartManager {
 
   async addProduct(idCart, idProduct) {
     try {
-      const carts = await this.getCarts();
-      const cart = carts.find((element) => element.id === idCart);
+      const product = await productManager.getProductById(idProduct);
+      if (typeof product !== "string") {
+        const carts = await this.getCarts();
+        const cart = carts.find((element) => element.id === idCart);
 
-      if (cart) {
-        const productIndex = cart.products.findIndex(
-          (element) => element.product === idProduct
-        );
+        if (cart) {
+          const productIndex = cart.products.findIndex(
+            (element) => element.product === idProduct
+          );
 
-        if (productIndex === -1) {
-          cart.products.push({ product: idProduct, quantity: 1 });
-        } else {
-          cart.products[productIndex].quantity++;
+          if (productIndex === -1) {
+            cart.products.push({ product: idProduct, quantity: 1 });
+          } else {
+            cart.products[productIndex].quantity++;
+          }
+          await fs.promises.writeFile(this.path, JSON.stringify(carts));
+          return cart;
         }
-        await fs.promises.writeFile(this.path, JSON.stringify(carts));
-        return cart;
+      } else {
+        return "El id de producto no existe";
       }
     } catch (error) {
       return error;
